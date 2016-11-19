@@ -20,8 +20,9 @@ namespace QRCodeDecoder
         private string errorpattern = "";
         private string encodingType = "";
         private int messageLength;
-        string encodedMessage;
+        string encodedMessage = "";
         private int lengthEachBlock;
+        private char[] dictionary = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',' ','$','%','*','+','-','.','/',':'};
 
         private delegate int Mydelegate(int i, int j);
 
@@ -74,8 +75,7 @@ namespace QRCodeDecoder
                     {
                         messageLength = (messageLength / 3);
                         totalBlocks = messageLength * 10;
-                    }
-                    else
+                    }else
                     {
                         if ((messageLength % 3) == 1)
                         {
@@ -92,6 +92,21 @@ namespace QRCodeDecoder
                     break;
 
                 case "0010": // AlphaNumeric Encoding
+                    getMessageLength(7);
+                    int total;
+                    if (messageLength % 2 == 0)
+                    {
+                        messageLength = (messageLength / 2);
+                        total = (messageLength * 11);
+                    }else
+                    {
+                        total = 6;
+                        messageLength = (messageLength / 2);
+                        total = (messageLength * 11);
+                    }
+                    encodedMessage += dataMatrix[n - 7, n - 2].ToString();
+                    getEncodedData(total-1, n - 8, n - 1);
+                    message.Text = "Your Message is : " + convertAlphaNumericMessage(total);
                     break;
 
                 case "0100": // 8 Byte Encoding
@@ -133,12 +148,37 @@ namespace QRCodeDecoder
             return sb.ToString();
         }
 
+        private string convertAlphaNumericMessage(int len)
+        {
+            StringBuilder sb = new StringBuilder();
+            int additional = len % 11;
+            for (int i = 0; i < len - additional; i += 11)
+            {
+                int num = Convert.ToInt32(encodedMessage.Substring(i, 11), 2), temp = 0;
+                char first, second;
+                while((num -temp)%45 != 0){ temp++; }
+                second = dictionary[temp];
+                first = dictionary[(num - temp) / 45];
+                sb.Append(first);
+                sb.Append(second);
+            }
+            if (additional != 0)
+            {
+                sb.Append(dictionary[Convert.ToInt32(encodedMessage.Substring(len - additional, additional), 2)]);
+            }
+            return sb.ToString();
+        }
+
         private void getMessageLength(int x)
         {
             string length = "";
             for (int i = 3; i <= x; i++)
             {
                 length += (dataMatrix[n - i, n - 1].ToString() + dataMatrix[n - i, n - 2].ToString());
+            }
+            if (encodingType == "0010")
+            {
+                length = length.Substring(0, 9);
             }
             messageLength = Convert.ToInt32(length, 2);
         }
@@ -176,7 +216,7 @@ namespace QRCodeDecoder
                 }
                 temp-= 2;
             }
-            encodedMessage = sb.ToString();
+            encodedMessage += sb.ToString();
         }
 
         private Bitmap getSizeofQR(Bitmap data)

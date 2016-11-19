@@ -13,9 +13,10 @@ namespace QRCodeDecoder
     public partial class Form1 : Form
     {
         private string fileName = "";
-        private int n = 21;
-        private int[,] dataMatrix = new int[21, 21];
-        private int[,] permanentMatrix = new int[21, 21];
+        private int n = 21; // n is version number
+        private int versionNum = 1;
+        private int[,] dataMatrix;
+        private int[,] permanentMatrix;
         private string maskpattern = "";
         private string errorpattern = "";
         private string encodingType = "";
@@ -23,6 +24,7 @@ namespace QRCodeDecoder
         string encodedMessage = "";
         private int lengthEachBlock;
         private char[] dictionary = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',' ','$','%','*','+','-','.','/',':'};
+        private int[] versions = {21,25,29,33,37,41,45};
 
         private delegate int Mydelegate(int i, int j);
 
@@ -36,12 +38,14 @@ namespace QRCodeDecoder
             qrImage.Visible = false;
             decoder.Enabled = false;
             message.Text = "";
-            fillPermanentMatrix();
+            versionNumber.Enabled = false;
+            versionNumber.Text = "1";
         }
 
         private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             fileDialog.FileName = "";
+            versionNumber.Enabled = true;
             fileDialog.Title = "Select a QR Image";
             fileDialog.Filter = "All images|*.jpg; *.bmp; *.png";
             fileDialog.ShowDialog();
@@ -59,68 +63,83 @@ namespace QRCodeDecoder
         // Currently works for a 21*21 size qr code and Byte Encoded Message.
         private void button1_Click(object sender, EventArgs e)
         {
-            Bitmap dataFile = new Bitmap(fileName);
-            Bitmap data = getSizeofQR(data: dataFile);
-            qrImage.Image = Image.FromHbitmap(data.GetHbitmap());
-            getDataMatrix(data: data);
-            getUnmaskedInfoBits();
-            unmaskDataMatrix();
-            getEncodingType();
-            switch (encodingType)
+            if (Int32.TryParse(versionNumber.Text, out versionNum) == false)
             {
-                case "0001": // Numeric Encoding
-                    getMessageLength(7);
-                    int totalBlocks;
-                    if ((messageLength % 3) == 0)
-                    {
-                        messageLength = (messageLength / 3);
-                        totalBlocks = messageLength * 10;
-                    }else
-                    {
-                        if ((messageLength % 3) == 1)
-                        {
-                            totalBlocks = 4;
-                        }else
-                        {
-                            totalBlocks = 7;
-                        }
-                        messageLength = (messageLength / 3);
-                        totalBlocks += (messageLength * 10);
-                    }    
-                    getEncodedData(totalBlocks,n-8,n-1);
-                    message.Text = "Your Message is : " + convertNumericMessage(totalBlocks);
-                    break;
-
-                case "0010": // AlphaNumeric Encoding
-                    getMessageLength(7);
-                    int total;
-                    if (messageLength % 2 == 0)
-                    {
-                        messageLength = (messageLength / 2);
-                        total = (messageLength * 11);
-                    }else
-                    {
-                        total = 6;
-                        messageLength = (messageLength / 2);
-                        total = (messageLength * 11);
-                    }
-                    encodedMessage += dataMatrix[n - 7, n - 2].ToString();
-                    getEncodedData(total-1, n - 8, n - 1);
-                    message.Text = "Your Message is : " + convertAlphaNumericMessage(total);
-                    break;
-
-                case "0100": // 8 Byte Encoding
-                    getMessageLength(6);
-                    getEncodedData(messageLength*8,n-7,n-1);
-                    message.Text = "Your Message is : " + convertByteMessage();
-                    break;
-
-                default:
-                    message.Text = "Cannot Decode This Format Data";
-                    break;
+                message.Text = "Enter a valid version Number";
             }
+            else
+            {
+                n = versions[versionNum-1];
+                dataMatrix = new int[n, n];
+                versionNumber.Enabled = false;
+                permanentMatrix = new int[n, n];
+                fillPermanentMatrix();
+                Bitmap dataFile = new Bitmap(fileName);
+                Bitmap data = getSizeofQR(data: dataFile);
+                qrImage.Image = Image.FromHbitmap(data.GetHbitmap());
+                getDataMatrix(data: data);
+                getUnmaskedInfoBits();
+                unmaskDataMatrix();
+                getEncodingType();
+                switch (encodingType)
+                {
+                    case "0001": // Numeric Encoding
+                        getMessageLength(7);
+                        int totalBlocks;
+                        if ((messageLength % 3) == 0)
+                        {
+                            messageLength = (messageLength / 3);
+                            totalBlocks = messageLength * 10;
+                        }
+                        else
+                        {
+                            if ((messageLength % 3) == 1)
+                            {
+                                totalBlocks = 4;
+                            }
+                            else
+                            {
+                                totalBlocks = 7;
+                            }
+                            messageLength = (messageLength / 3);
+                            totalBlocks += (messageLength * 10);
+                        }
+                        getEncodedData(totalBlocks, n - 8, n - 1);
+                        message.Text = "Your Message is : " + convertNumericMessage(totalBlocks);
+                        break;
 
-            decoder.Enabled = false;
+                    case "0010": // AlphaNumeric Encoding
+                        getMessageLength(7);
+                        int total;
+                        if (messageLength % 2 == 0)
+                        {
+                            messageLength = (messageLength / 2);
+                            total = (messageLength * 11);
+                        }
+                        else
+                        {
+                            total = 6;
+                            messageLength = (messageLength / 2);
+                            total = (messageLength * 11);
+                        }
+                        encodedMessage += dataMatrix[n - 7, n - 2].ToString();
+                        getEncodedData(total - 1, n - 8, n - 1);
+                        message.Text = "Your Message is : " + convertAlphaNumericMessage(total);
+                        break;
+
+                    case "0100": // 8 Byte Encoding
+                        getMessageLength(6);
+                        getEncodedData(messageLength * 8, n - 7, n - 1);
+                        message.Text = "Your Message is : " + convertByteMessage();
+                        break;
+
+                    default:
+                        message.Text = "Cannot Decode This Format Data";
+                        break;
+                }
+
+                decoder.Enabled = false;
+            }
         }
 
         private string convertByteMessage()

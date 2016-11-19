@@ -64,9 +64,47 @@ namespace QRCodeDecoder
             getDataMatrix(data: data);
             getUnmaskedInfoBits();
             unmaskDataMatrix();
-            getEncodingTypeandLength();
-            getEncodedData(); // the data is in reverse order here
-            message.Text = "Your Message is : " + convertByteMessage();
+            getEncodingType();
+            switch (encodingType)
+            {
+                case "0001": // Numeric Encoding
+                    getMessageLength(7);
+                    int totalBlocks;
+                    if ((messageLength % 3) == 0)
+                    {
+                        messageLength = (messageLength / 3);
+                        totalBlocks = messageLength * 10;
+                    }
+                    else
+                    {
+                        if ((messageLength % 3) == 1)
+                        {
+                            totalBlocks = 4;
+                        }else
+                        {
+                            totalBlocks = 7;
+                        }
+                        messageLength = (messageLength / 3);
+                        totalBlocks += (messageLength * 10);
+                    }    
+                    getEncodedData(totalBlocks,n-8,n-1);
+                    message.Text = "Your Message is : " + convertNumericMessage(totalBlocks);
+                    break;
+
+                case "0010": // AlphaNumeric Encoding
+                    break;
+
+                case "0100": // 8 Byte Encoding
+                    getMessageLength(6);
+                    getEncodedData(messageLength*8,n-7,n-1);
+                    message.Text = "Your Message is : " + convertByteMessage();
+                    break;
+
+                default:
+                    message.Text = "Cannot Decode This Format Data";
+                    break;
+            }
+
             decoder.Enabled = false;
         }
 
@@ -80,13 +118,36 @@ namespace QRCodeDecoder
             return sb.ToString();
         }
 
-        private void getEncodedData()
+        private string convertNumericMessage(int len)
+        {
+            StringBuilder sb = new StringBuilder();
+            int additional = len % 10;
+            for (int i = 0; i < len-additional ; i += 10)
+            {
+                sb.Append(Convert.ToString(Convert.ToInt32(encodedMessage.Substring(i, 10), 2)));
+            }
+            if (additional != 0)
+            {
+                sb.Append(Convert.ToString(Convert.ToInt32(encodedMessage.Substring(len - additional, additional), 2)));
+            }
+            return sb.ToString();
+        }
+
+        private void getMessageLength(int x)
+        {
+            string length = "";
+            for (int i = 3; i <= x; i++)
+            {
+                length += (dataMatrix[n - i, n - 1].ToString() + dataMatrix[n - i, n - 2].ToString());
+            }
+            messageLength = Convert.ToInt32(length, 2);
+        }
+
+        private void getEncodedData(int temp,int i,int j)
         {
             bool flag = true; // when true moves up and when false move down
-            int temp = messageLength*8;
-            int i = n-7 ,j = n-1;
             StringBuilder sb = new StringBuilder();
-            while (temp!= 0)
+            while (temp> 0)
             {
                 if(permanentMatrix[i,j] == 5 || permanentMatrix[i, j] == 4)
                 {
@@ -98,7 +159,7 @@ namespace QRCodeDecoder
                 }
 
                 sb.Append(dataMatrix[i, j]);
-                sb.Append(dataMatrix[i, j - 1]);
+                if (temp - 1 != 0){sb.Append(dataMatrix[i, j - 1]);}
 
                 if (flag)
                 {
@@ -156,11 +217,9 @@ namespace QRCodeDecoder
             return temp;
         }
 
-        private void getEncodingTypeandLength()
+        private void getEncodingType()
         {
             encodingType  += dataMatrix[n-1,n-1].ToString() + dataMatrix[n-1,n-2].ToString() + dataMatrix[n-2,n-1].ToString() + dataMatrix[n-2,n-2].ToString();
-            string length = dataMatrix[n - 3, n - 1].ToString() + dataMatrix[n - 3, n - 2].ToString() + dataMatrix[n - 4, n - 1].ToString() + dataMatrix[n - 4, n - 2].ToString() + dataMatrix[n - 5, n - 1].ToString() + dataMatrix[n - 5, n - 2].ToString() + dataMatrix[n -6, n - 1].ToString() + dataMatrix[n - 6, n - 2].ToString();
-            messageLength = Convert.ToInt32(length,2);
         }
 
         private void unmaskDataMatrix()

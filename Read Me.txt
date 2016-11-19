@@ -1,0 +1,20 @@
+Version Number:
+
+Version number basically defines number of the blocks in each qr code.
+version 1 = 21*21
+version 2 = 25*25
+version 3 = 29*29
+version 4 = 33*33
+...
+version 40 = 177*177
+
+The code handles version 1-6.
+for version 1 Alignment pattern Number =0
+for version 2-6 Alignment pattern Number = 1
+and so on to handle versions above 6 we need to know the location of other alignment patterns and has to be included
+in permanent matrix so that they are not flipped when we do unmasking.
+
+How to use:
+1) Select a image either from the samle given or choose one of yours.
+2) give the correct version number.
+3) Click on decode.

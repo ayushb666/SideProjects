@@ -35,6 +35,7 @@
             this.qrImage = new System.Windows.Forms.PictureBox();
             this.useless = new System.Windows.Forms.Label();
             this.versionNumber = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.qrImage)).BeginInit();
             this.SuspendLayout();
             // 
@@ -99,11 +100,21 @@
             this.versionNumber.Size = new System.Drawing.Size(100, 26);
             this.versionNumber.TabIndex = 8;
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(472, 126);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(226, 20);
+            this.label1.TabIndex = 9;
+            this.label1.Text = "Use a version number from 1-6";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(725, 577);
+            this.Controls.Add(this.label1);
             this.Controls.Add(this.versionNumber);
             this.Controls.Add(this.useless);
             this.Controls.Add(this.qrImage);
@@ -128,6 +139,7 @@
         private System.Windows.Forms.OpenFileDialog fileDialog;
         private System.Windows.Forms.Label useless;
         private System.Windows.Forms.TextBox versionNumber;
+        private System.Windows.Forms.Label label1;
     }
 }
 

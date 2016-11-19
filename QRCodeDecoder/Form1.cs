@@ -13,7 +13,7 @@ namespace QRCodeDecoder
     public partial class Form1 : Form
     {
         private string fileName = "";
-        private int n = 21; // n is version number
+        private int n = 21; // n is size of matrix
         private int versionNum = 1;
         private int[,] dataMatrix;
         private int[,] permanentMatrix;
@@ -24,7 +24,7 @@ namespace QRCodeDecoder
         string encodedMessage = "";
         private int lengthEachBlock;
         private char[] dictionary = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',' ','$','%','*','+','-','.','/',':'};
-        private int[] versions = {21,25,29,33,37,41,45};
+        private int[] versions = {21,25,29,33,37,41};
 
         private delegate int Mydelegate(int i, int j);
 

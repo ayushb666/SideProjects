@@ -58,6 +58,7 @@ namespace QRCodeDecoder
                 decoder.Enabled = true;
                 message.Text = "File Uploaded";
             }
+            selectPic.Enabled = false;
         }
 
         // Currently works for a 21*21 size qr code and Byte Encoded Message.
@@ -201,14 +202,14 @@ namespace QRCodeDecoder
             }
             messageLength = Convert.ToInt32(length, 2);
         }
-
+          
         private void getEncodedData(int temp,int i,int j)
         {
             bool flag = true; // when true moves up and when false move down
             StringBuilder sb = new StringBuilder();
             while (temp> 0)
             {
-                if(permanentMatrix[i,j] == 5 || permanentMatrix[i, j] == 4)
+                if((permanentMatrix[i, j] == 5 && permanentMatrix[i, j - 1] == 5) || (permanentMatrix[i, j] == 4 && permanentMatrix[i, j - 1] == 4))
                 {
                     while(permanentMatrix[i, j] == 5 || permanentMatrix[i, j] == 4)
                     {
@@ -217,8 +218,19 @@ namespace QRCodeDecoder
                     }
                 }
 
-                sb.Append(dataMatrix[i, j]);
-                if (temp - 1 != 0){sb.Append(dataMatrix[i, j - 1]);}
+                if (permanentMatrix[i, j] != 4 && permanentMatrix[i, j] != 5)
+                {
+                    sb.Append(dataMatrix[i, j]);
+                    temp--;
+                }
+                if (permanentMatrix[i, j-1] != 4 && permanentMatrix[i, j-1] != 5)
+                {
+                    if (temp != 0)
+                    {
+                        sb.Append(dataMatrix[i, j - 1]);
+                        temp--;
+                    }
+                }
 
                 if (flag)
                 {
@@ -233,7 +245,6 @@ namespace QRCodeDecoder
                         j -= 2;
                         flag = true;}
                 }
-                temp-= 2;
             }
             encodedMessage += sb.ToString();
         }
@@ -390,8 +401,19 @@ namespace QRCodeDecoder
                 { permanentMatrix[i, j] = 5; }
             }
 
-            for (int i = 6; i < n - 7; i += 2) { permanentMatrix[6, i] = 4; }
-            for (int i = 6; i < n - 7; i += 2) { permanentMatrix[i, 6] = 4; }
+            for (int i = 6; i < n - 7; i ++) { permanentMatrix[6, i] = 4; }
+            for (int i = 6; i < n - 7; i ++) { permanentMatrix[i, 6] = 4; }
+
+            if(versionNum >1 && versionNum < 7)
+            {
+                for (int i = n - 9; i <= n - 5; i++)
+                {
+                    for (int j =n-9;j<= n - 5; j++)
+                    {
+                        permanentMatrix[i, j] = 4;
+                    }
+                }
+            }
 
         }
 
